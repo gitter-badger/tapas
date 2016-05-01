@@ -21,7 +21,11 @@ setup(name='tapas',
           # -*- Extra requirements: -*-
           'aiohttp',
           'click',
-          'jinja2'
+          'jinja2',
+          'peewee',
+          'colander',
+          'pytest',
+          'requests'
       ],
       entry_points={
         'console_scripts': [
