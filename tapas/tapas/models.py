@@ -16,32 +16,74 @@ def peewee_json(obj):
         return obj.isoformat()
     return obj
 
+MANAGED_COLUMNS = ['id', 'created', 'modified']
 
 class Model(p.Model):
     class Meta:
         database = db
+    
+    created = p.DateTimeField()
+    modified = p.DateTimeField()
 
     @classmethod
     def as_json(cls, data):
         return json.dumps(data, default=peewee_json)
 
 
+    @classmethod
+    def new_from_request(cls, data):
+        item = cls()
+        item.created = datetime.now()
+        item.update_from_request(data)
+        return item
+
+    def update_from_request(self, data):
+        fields = self._meta.fields.keys()
+        fields = [f for f in fields if f not in MANAGED_COLUMNS]
+        
+        for f in fields:
+            setattr(self, f, data[f])
+        self.modified = self.created
+
+    def update_links(self):
+        pass
+
+
+
+class Location(Model):
+    link_key = 'loc'
+    url_key = 'location'
+
+    name = p.CharField()
+    body = p.TextField()
+
+
 class Article(Model):
-    url = p.CharField(unique=True)
+    link_key = 'art'
+    url_key = 'article'
+
     title = p.CharField()
     body = p.TextField()
-    created = p.DateTimeField()
+
+
+class Link(Model):
+    source_id = p.IntegerField()
+    source_type = p.CharField()
+    target_id = p.IntegerField()
+    target_type = p.CharField()
 
 
 def create_sample_data():
     db.connect()
-    db.create_tables([Article])
+    db.create_tables([Article, Location, Link])
 
+    now = datetime.now()
     article1 = Article(
         url=str(uuid.uuid1()),
         title='title1',
         body='some longer text',
-        created=datetime.now()
+        created=now,
+        modified=now
     )
     article1.save()
 

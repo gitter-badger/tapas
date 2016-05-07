@@ -21,9 +21,16 @@ def test_main(service):
 
 def test_create_article(service):
     data = {
-        'url': str(uuid.uuid1()),
         'title': 'test_title',
         'body': 'test_body'
     }
     a = requests.post(service.root + "article", data=json.dumps(data)).json()
+    print(a)
+
+def test_create_location(service):
+    data = {
+        'name': 'test_name',
+        'body': 'test_body'
+    }
+    a = requests.post(service.root + "location", data=json.dumps(data)).json()
     print(a)

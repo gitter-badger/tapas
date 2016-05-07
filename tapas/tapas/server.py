@@ -47,38 +47,35 @@ class DevServer():
 
 
 @asyncio.coroutine
-def handle(request):
-    return web.Response(body="ok".encode('utf8'))
+def status(request):
+    return web.Response(body="Service is up and running ...".encode('utf8'))
 
 
-@asyncio.coroutine
-def article(request):
-    m.db.connect()
-    data = yield from request.json()
-
-    print(data)
-
-    article = m.Article(
-        url = data['url'],
-        title = data['title'],
-        body = data['body'],
-        created=datetime.now()
-    )
-    article.save()
-    m.db.close()
-    return web.Response(body=m.Article.as_json(article).encode('utf-8'))
+def register_entity(router, entity):
+    
+    @asyncio.coroutine
+    def create(request):
+        m.db.connect()
+        data = yield from request.json()
+        item = entity.new_from_request(data)
+        item.save()
+        m.db.close()
+        return web.Response(body=entity.as_json(item).encode('utf-8'))
+    
+    app.router.add_route('POST', '/{}'.format(entity.url_key), create)
 
 
+    @asyncio.coroutine
+    def read(request):
+        m.db.connect()
+        data = list(entity.select())
+        body = entity.as_json(data)
+        m.db.close()
+        return web.Response(body=body.encode('utf-8'))
+    
+    app.router.add_route('GET', '/{}s'.format(entity.url_key), read)
 
 
-@asyncio.coroutine
-def articles(request):
-    m.db.connect()
-    data = list(m.Article.select())
-    body = m.Article.as_json(data)
-    m.db.close()
-
-    return web.Response(body=body.encode('utf-8'))
 
 
 @asyncio.coroutine
@@ -99,10 +96,10 @@ def schema(request):
     m.db.close()
 
 app = web.Application()
-app.router.add_route('GET', '/', handle)
-app.router.add_route('GET', '/articles', articles)
-app.router.add_route('POST', '/article', article)
+app.router.add_route('GET', '/', status)
 app.router.add_route('GET', '/schema', schema)
+register_entity(app.router, m.Article)
+register_entity(app.router, m.Location)
 
 if __name__=='__main__':
     web.run_app(app)
