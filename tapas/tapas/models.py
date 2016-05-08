@@ -5,8 +5,7 @@ import os.path
 
 import peewee as p
 
-path = os.path.split(__file__)[0]
-db = p.SqliteDatabase(os.path.join(path, 'flaneur.db'))
+db = p.SqliteDatabase(None)
 
 def peewee_json(obj):
     if isinstance(obj, Model):
@@ -59,11 +58,20 @@ class Location(Model):
 
 
 class Article(Model):
-    link_key = 'art'
+    link_key = 'article'
     url_key = 'article'
 
     title = p.CharField()
     body = p.TextField()
+
+
+class Artist(Model):
+    link_key = 'artist'
+    url_key = 'artist'
+
+    name = p.CharField()
+    body = p.TextField()
+
 
 
 class Link(Model):
@@ -73,21 +81,15 @@ class Link(Model):
     target_type = p.CharField()
 
 
-def create_sample_data():
-    db.connect()
-    db.create_tables([Article, Location, Link])
+def connect_db(path):
+    db.init(path)
 
-    now = datetime.now()
-    article1 = Article(
-        url=str(uuid.uuid1()),
-        title='title1',
-        body='some longer text',
-        created=now,
-        modified=now
-    )
-    article1.save()
 
+def close_db():
     db.close()
 
-if __name__=='__main__':
-    create_sample_data()
+
+def init_tables():
+    db.create_tables([Article, Artist, Location, Link])
+
+

@@ -5,6 +5,10 @@ import click
 from jinja2 import Environment
 env = Environment()
 
+import tapas
+import tapas.models as m
+import tapas.server as s
+
 
 def expand_placeholders(root, path, name):
     p = os.path.join(root, path)
@@ -49,11 +53,28 @@ def init(name):
 
     click.echo('done.')
 
+
 @click.command()
-def serve():
-    click.echo('serve called')
+@click.argument('config')
+def serve(config):
+    config = tapas.Configuration(config)
+    server = s.DevServer(config.db_path)
+    server.start()
+
+
+@click.command()
+@click.argument('config')
+def init_db(config):
+    config = tapas.Configuration(config)
+    click.echo("Setting up database ...")
+    click.echo(config.db_path)
+    m.connect_db(config.db_path)
+    m.init_tables()
+    m.close_db()
+
 
 cli.add_command(init)
+cli.add_command(init_db)
 cli.add_command(serve)
 
 def main():

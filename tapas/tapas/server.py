@@ -13,10 +13,12 @@ class DevServer():
     used for testing the service, but can also be used to script the import
     of sample data into a database."""
 
-    def __init__(self, ip='0.0.0.0', port=8089):
+    def __init__(self, db_path, ip='0.0.0.0', port=8089, init_tables=False):
         self.ip = ip
         self.port = port
         self.process = None
+        self.db_path = db_path
+        self.init_tables = init_tables
 
     @property
     def root(self):
@@ -26,6 +28,9 @@ class DevServer():
         e = Event()
 
         def run():
+            m.connect_db(self.db_path)
+            if self.init_tables:
+                m.init_tables()
             loop = asyncio.get_event_loop()
             handler = app.make_handler()
             f = loop.create_server(handler, self.ip, self.port)
@@ -36,6 +41,7 @@ class DevServer():
             finally:
                 srv.close()
             loop.close()
+            m.close_db()
         self.process = Process(target=run)
         self.process.start()
         e.wait()
@@ -55,11 +61,9 @@ def register_entity(router, entity):
     
     @asyncio.coroutine
     def create(request):
-        m.db.connect()
         data = yield from request.json()
         item = entity.new_from_request(data)
         item.save()
-        m.db.close()
         return web.Response(body=entity.as_json(item).encode('utf-8'))
     
     app.router.add_route('POST', '/{}'.format(entity.url_key), create)
@@ -67,10 +71,8 @@ def register_entity(router, entity):
 
     @asyncio.coroutine
     def read(request):
-        m.db.connect()
         data = list(entity.select())
         body = entity.as_json(data)
-        m.db.close()
         return web.Response(body=body.encode('utf-8'))
     
     app.router.add_route('GET', '/{}s'.format(entity.url_key), read)
@@ -80,9 +82,7 @@ def register_entity(router, entity):
 
 @asyncio.coroutine
 def schema(request):
-    m.db.connect()
-
-    models = [m.Article]
+    models = [m.Article, m.Location]
 
     schema = {}
 
@@ -92,8 +92,6 @@ def schema(request):
 
     return web.Response(body=body.encode('utf-8'))
 
-
-    m.db.close()
 
 app = web.Application()
 app.router.add_route('GET', '/', status)
