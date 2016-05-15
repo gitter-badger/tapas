@@ -1,5 +1,7 @@
 # The tapas framework
 
+[![Join the chat at https://gitter.im/tapas-cantina/tapas](https://badges.gitter.im/tapas-cantina/tapas.svg)](https://gitter.im/tapas-cantina/tapas?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Install
 
 Create a fresh virtualenv and install the checked out module via `pip install -e .`. 
