@@ -3,6 +3,7 @@ from multiprocessing import Process, Event
 from datetime import datetime
 
 from aiohttp import web
+import aiohttp_cors
 import tapas.models as m
 import json
 
@@ -98,6 +99,16 @@ app.router.add_route('GET', '/', status)
 app.router.add_route('GET', '/schema', schema)
 register_entity(app.router, m.Article)
 register_entity(app.router, m.Location)
+
+cors = aiohttp_cors.setup(app, defaults={
+    "*": aiohttp_cors.ResourceOptions(
+        allow_credentials=True,
+        expose_headers="*",
+        allow_headers="*")
+    })
+
+for route in list(app.router.routes()):
+    cors.add(route)
 
 if __name__=='__main__':
     web.run_app(app)

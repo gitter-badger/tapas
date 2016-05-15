@@ -20,6 +20,7 @@ setup(name='tapas',
       install_requires=[
           # -*- Extra requirements: -*-
           'aiohttp',
+          'aiohttp_cors',
           'click',
           'jinja2',
           'peewee',
